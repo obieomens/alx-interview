@@ -1,44 +1,45 @@
-def print_statistics(signal, frame):
-    global total_file_size, status_code_counts
-    print(f"Total file size: {total_file_size}")
-    for code, count in sorted(status_code_counts.items()):
-        if count > 0:
-            print(f"{code}: {count}")
-    sys.exit(0)
+#!/usr/bin/python3
 
-signal.signal(signal.SIGINT, print_statistics)
+""" script that reads stdin line by line and computes metrics """
+
+import sys
+
+
+def printsts(dic, size):
+    """ WWPrints information """
+    print("File size: {:d}".format(size))
+    for i in sorted(dic.keys()):
+        if dic[i] != 0:
+            print("{}: {:d}".format(i, dic[i]))
+
+
+sts = {"200": 0, "301": 0, "400": 0, "401": 0, "403": 0,
+       "404": 0, "405": 0, "500": 0}
+
+count = 0
+size = 0
 
 try:
     for line in sys.stdin:
-        line = line.strip()
-        parts = line.split()
-        
-        if len(parts) != 7:
-            continue
-        
-        ip_address = parts[0]
-        date = parts[3][1:]
-        request = parts[5]
-        status_code = parts[6]
-        file_size = int(parts[7])
-        
-        if not status_code.isdigit():
-            continue
-        
-        status_code = int(status_code)
-        
-        if status_code in status_code_counts:
-            status_code_counts[status_code] += 1
-        
-        total_file_size += file_size
-        line_count += 1
-        
-        if line_count % 10 == 0:
-            print(f"Total file size: {total_file_size}")
-            for code, count in sorted(status_code_counts.items()):
-                if count > 0:
-                    print(f"{code}: {count}")
-            print()
-        
+        if count != 0 and count % 10 == 0:
+            printsts(sts, size)
+
+        stlist = line.split()
+        count += 1
+
+        try:
+            size += int(stlist[-1])
+        except:
+            pass
+
+        try:
+            if stlist[-2] in sts:
+                sts[stlist[-2]] += 1
+        except:
+            pass
+    printsts(sts, size)
+
+
 except KeyboardInterrupt:
-    print_statistics(None, None)
+    printsts(sts, size)
+    raise
